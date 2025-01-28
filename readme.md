@@ -36,9 +36,10 @@ Due to the following two reasons, the various functionalities of the code will b
 2、
 Information security review of code
 
-TODO: \
+Updated gradually: \
  1、Dynamic mode has not been updated yet \
 2、More guides are being prepared \
+3、The training of LiDAR-GS (2DGS version) 
 
 
 ## Video
