@@ -21,8 +21,8 @@
    ·
    <a href="https://scholar.google.com/citations?user=voxznZAAAAAJ">Xiaodan Liang</a> -->
 <p align="center">
-<img src="./teaser.png" alt="lidargs" style="zoom: 100%;" />
-<img src="./overview.png" alt="lidargs" style="zoom: 100%;" />
+<img src="./assets/teaser.png" alt="lidargs" style="zoom: 100%;" />
+<img src="./assets/overview.png" alt="lidargs" style="zoom: 100%;" />
 </p>
 
 **[Abstract]**: LiDAR simulation plays a crucial role in closed-loop simulation for autonomous driving. Although recent advancements, such as the use of reconstructed mesh and Neural Radiance Fields (NeRF), have made progress in simulating the physical properties of LiDAR, these methods have struggled to achieve satisfactory frame rates and rendering quality. To address these limitations, we present **LiDAR-GS**, the first LiDAR Gaussian Splatting method, for real-time high-fidelity re-simulation of LiDAR sensor scans in public urban road scenes. The vanilla Gaussian Splatting, designed for camera models, cannot be directly applied to LiDAR re-simulation. To bridge the gap between passive camera and active LiDAR, our LiDAR-GS designs a differentiable laser beam splatting, grounded in the LiDAR range view model. This innovation allows for precise surface splatting by projecting lasers onto micro cross-sections, effectively eliminating artifacts associated with local affine approximations. Additionally, LiDAR-GS leverages Neural Gaussian Fields, which further integrate view-dependent clues, to represent key LiDAR properties that are influenced by the incident angle and external factors. Combining these practices with some essential adaptations, e.g., dynamic instances decomposition, our approach succeeds in simultaneously re-simulating depth, intensity, and ray-drop channels, achieving state-of-the-art results in both rendering frame rate and quality on publically available large scene datasets. 
@@ -42,7 +42,7 @@ TODO: \
 
 
 ## Video
-[more results](https://github.com/cjlunmh/LiDAR-GS/blob/main/video.mp4)
+[more results](https://github.com/cjlunmh/LiDAR-GS/blob/main/assets/video.mp4)
 
 ## Enrionment setup 
 Ref to [dockerfile](https://github.com/cjlunmh/LiDAR-GS/blob/main/Dockerfile)
