@@ -27,17 +27,52 @@
 
 **[Abstract]**: LiDAR simulation plays a crucial role in closed-loop simulation for autonomous driving. Although recent advancements, such as the use of reconstructed mesh and Neural Radiance Fields (NeRF), have made progress in simulating the physical properties of LiDAR, these methods have struggled to achieve satisfactory frame rates and rendering quality. To address these limitations, we present **LiDAR-GS**, the first LiDAR Gaussian Splatting method, for real-time high-fidelity re-simulation of LiDAR sensor scans in public urban road scenes. The vanilla Gaussian Splatting, designed for camera models, cannot be directly applied to LiDAR re-simulation. To bridge the gap between passive camera and active LiDAR, our LiDAR-GS designs a differentiable laser beam splatting, grounded in the LiDAR range view model. This innovation allows for precise surface splatting by projecting lasers onto micro cross-sections, effectively eliminating artifacts associated with local affine approximations. Additionally, LiDAR-GS leverages Neural Gaussian Fields, which further integrate view-dependent clues, to represent key LiDAR properties that are influenced by the incident angle and external factors. Combining these practices with some essential adaptations, e.g., dynamic instances decomposition, our approach succeeds in simultaneously re-simulating depth, intensity, and ray-drop channels, achieving state-of-the-art results in both rendering frame rate and quality on publically available large scene datasets. 
 
-## Note
-After the paper is accepted, source code will be made publicly available. If you have any questions about main-paper, please feel free to contact us.
+## Updates
+- [2025-01-28] 🎉🧧 Happy New Year's Eve! The core code is publicly available.
+
+## Notes
+Due to the following two reasons, the various functionalities of the code will be released progressively. \
+1、The paper is under review \
+2、
+Information security review of code
+
+TODO: \
+ 1、Dynamic mode has not been updated yet \
+2、More guides are being prepared \
+
 
 ## Video
-<!-- <video width="320" height="240" controls>
-  <source src="https://github.com/cjlunmh/LiDAR-GS/blob/main/video.mp4" type="video/mp4">
-</video> -->
 [more results](https://github.com/cjlunmh/LiDAR-GS/blob/main/video.mp4)
 
-## Prepare and Run
-Coming soon...
+## Enrionment setup 
+Ref to [dockerfile](https://github.com/cjlunmh/LiDAR-GS/blob/main/Dockerfile)
+
+Then 
+```
+pip install submodules/simple-knn
+pip install submodules/diff_lidargs_rasterization
+(optional)
+pip install submodules/diff_lidargs_surfel_rasterization 
+```
+
+## Prepare Dataset
+Details coming soon ...
+
+- Static dataset
+  - ref to [Lidar-NeRF](https://github.com/tangtaogo/lidar-nerf)
+- Dynamic dataset
+  - ref to [DyNFL](https://github.com/prs-eth/Dynamic-LiDAR-Resimulation)
+
+
+## Train
+Guidance is coming soon ...
+
+- Training of static dataset:
+  ```
+  bash train.sh
+  ```
+- Training of dynamic dataset: ...
+- Inference: ...
 
 
 ## Citation
@@ -56,4 +91,12 @@ If you find our code or paper helps, please consider citing:
 
 
 ## Acknowledgments
-Coming soon...
+We thank all authors from 
+- [3DGS](https://github.com/graphdeco-inria/gaussian-splatting) 
+- [2DGS](https://github.com/hbb1/2d-gaussian-splatting)
+- [Scaffold-GS](https://github.com/city-super/Scaffold-GS)
+- [Lidar-NeRF](https://github.com/tangtaogo/lidar-nerf)
+- [AlignMiF](https://github.com/tangtaogo/alignmif)
+- [DyNFL](https://github.com/prs-eth/Dynamic-LiDAR-Resimulation)
+
+for presenting such an excellent work.
