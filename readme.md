@@ -59,10 +59,26 @@ pip install submodules/diff_lidargs_surfel_rasterization
 ## Prepare Dataset
 Details coming soon ...
 
-- Static dataset
-  - ref to [Lidar-NeRF](https://github.com/tangtaogo/lidar-nerf)
-- Dynamic dataset
-  - ref to [DyNFL](https://github.com/prs-eth/Dynamic-LiDAR-Resimulation)
+- Static dataset ( ref to [AlignMiF](https://github.com/tangtaogo/alignmif) )
+  - eg. Waymo Dataset:
+Following AlignMiF's dataset preprocess, you can obtain the following file formats in `data/waymo`：
+```
+waymo_seq1067
+  ├── waymo_extract
+  ├── waymo_train
+  ├── transforms_test.json
+  ├── transforms_train.json
+  ├── transforms_val.json
+
+you should change train.sh : 
+data_path="data/waymo"
+logdir='waymo_seq1067'            
+```
+
+- Dynamic dataset ( ref to [DyNFL](https://github.com/prs-eth/Dynamic-LiDAR-Resimulation) )
+  - you can download preprocessed [5scene](https://github.com/prs-eth/Dynamic-LiDAR-Resimulation/tree/master/WaymoPreprocessing) from DyNFL
+  - addition, you should download `lidar_calibration.parquet` from official link（To be updated）
+
 
 
 ## Train
@@ -73,7 +89,6 @@ Guidance is coming soon ...
   bash train.sh
   ```
 - Training of dynamic dataset: ...
-- Inference: ...
 
 
 ## Citation

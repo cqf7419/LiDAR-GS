@@ -355,13 +355,13 @@ def waymo_readCamerasFromTransforms(path, transformsfile, white_background, exte
         W_lidar = contents["w_lidar"]
         H_lidar = contents["h_lidar"]
         frames_train = contents["frames"]
-        # if "beam_inclinations" in contents:
-        beam_inclinations = contents["beam_inclinations"] # waymo
-        data_name = "waymo"
-        # else:
-        #     beam_inclinations = get_beam_inclinations(2.0,26.9,H_lidar).copy() # kitti
-        #     print(beam_inclinations)
-        #     data_name = "kitti"
+        if "beam_inclinations" in contents:
+            beam_inclinations = contents["beam_inclinations"] # waymo
+            data_name = "waymo"
+        else:
+            beam_inclinations = get_beam_inclinations(2.0,26.9,H_lidar).copy() # kitti  # 
+            print(beam_inclinations)
+            data_name = "kitti"
 
     if data_label == "waymo":
         test_transformsfile = "transforms_test.json"
@@ -475,8 +475,6 @@ def readwaymoInfo(path, white_background, eval, data_label, extension=".png", pl
     else:
         cam_infos,pointcloud,ply_path = waymo_readCamerasFromTransforms(path, "transforms_"+data_label+"_train.json", white_background, extension,data_label)
 
-    # train_cam_infos = [c for idx, c in enumerate(cam_infos) if (idx+1)%20 != 0]  
-    # test_cam_infos = [c for idx, c in enumerate(cam_infos) if (idx+1)%20 == 0]  
     train_cam_infos = []
     test_cam_infos = []
     for idx, c in enumerate(cam_infos):
@@ -514,190 +512,13 @@ def readwaymoInfo(path, white_background, eval, data_label, extension=".png", pl
                            nerf_normalization=nerf_normalization,
                            ply_path=ply_path)
     return scene_info
-############################################################################################################
 
-# 做编辑的demo的临时数据修改
-def waymo_readCamerasFromTransforms_temp(path, transformsfile, white_background, extension=".png",data_label=None):
-    ply_path = os.path.join(path, "points3d.ply")
-    print(ply_path)
-    cam_infos = []
-    
-    frames_train = None
-    frames_test = None
-    W_lidar = 2650
-    H_lidar = 64
-    beam_inclinations = None
-    data_name = "waymo"
-
-
-    with open(os.path.join(path, transformsfile)) as json_file:
-        contents = json.load(json_file)
-
-        W_lidar = contents["w_lidar"]
-        H_lidar = contents["h_lidar"]
-        frames_train = contents["frames"]
-        # if "beam_inclinations" in contents:
-        beam_inclinations = contents["beam_inclinations"] # waymo
-        data_name = "waymo"
-
-
-    if data_label == "waymo":
-        test_transformsfile = "transforms_test.json"
-    else:
-        test_transformsfile = "transforms_"+data_label+"_test.json"
-        print(test_transformsfile)
-    with open(os.path.join(path, test_transformsfile)) as json_file:
-        contents_test = json.load(json_file)
-        frames_test = contents_test["frames"]
-
-    pcds = []
-
-    radius = 3.0  # 距离相机的位置
-    theta_values = np.linspace(0, 2 * np.pi, 50)  # 从 0 到 2π 的 100 个点
-    # 生成轨迹
-    idx = -1
-    for theta in theta_values:
-        idx +=1
-        frame = frames_train[35]
-
-        image_path = path+"/"+frame["file_path"]
-        image_name = image_path.split('/')[-1].split('.')[0] # 
-
-        fx = contents["fl_x"]
-        fy = contents["fl_y"]
-        cx = contents["cx"]
-        cy = contents["cy"]
-        w = contents["w"]
-        h = contents["h"]
-        FovX = focal2fov(focal=fx,pixels=w)
-        FovY = focal2fov(focal=fy,pixels=h) # maybe unuseful
-        intrinsics = [2.0,26.9]
-
-
-
-        l2w = np.array(frame["lidar2world"]) # [4,4]
-        # angle_z = np.arctan2(l2w[1, 0], l2w[0, 0])
-        # Rz = np.array([[ np.cos(angle_z), -np.sin(angle_z), 0],
-        #             [ np.sin(angle_z),  np.cos(angle_z), 0],
-        #             [             0,             0, 1]])
-        # l2w[:3, :3] = Rz
-        w2l = np.linalg.inv(l2w)
-        R = np.transpose(w2l[:3,:3])  # R is stored transposed due to 'glm' in CUDA code
-        T = w2l[:3, 3]
-
-        # 读取每帧lidar数据
-        # if idx % len(cameras) == 0: # 同一个timestep下的雷达帧数据相同 （此处是全局雷达）
-        lidar_center = np.zeros([1,3],dtype=np.float32)
-        # lidar_center = (np.pad(lidar_center, ((0,0),(0, 1)), constant_values=1) @ w2l.T)[:,:3]
-        lidar_center = (np.pad(lidar_center, ((0,0),(0, 1)), constant_values=1) @ l2w.T)[:,:3]
-
-
-        lidar_center[:,0] = lidar_center[:,0]  # 不变
-        T[0:1] = T[0:1]
-        lidar_center[:,1] = lidar_center[:,1] - 2 * np.cos(theta)  # y 轴变化
-        T[1:2] = T[1:2] + 3 * np.cos(theta)
-        lidar_center[:,2] = lidar_center[:,2] + 0.5 * np.sin(theta)  # z 轴变化
-        T[2:3] = T[2:3] + 1 * np.sin(theta)
-
-        rangeview_image_lidar = np.load(os.path.join(path, frame["lidar_file_path"].replace(" ", ""))) 
-        range_view = np.zeros((H_lidar, W_lidar, 3))
-        range_view[:, :, 1] = rangeview_image_lidar[:,:,1] # intensities
-        range_view[:, :, 2] = rangeview_image_lidar[:,:,2] #pano
-        ray_drop = np.where(range_view.reshape(-1, 3)[:, 2] <= 0.0, 0.0,
-                            1.0).reshape(H_lidar, W_lidar, 1)
-
-
-        lidar_point = pano_to_lidar(rangeview_image_lidar[:, :, 2],beam_inclinations=beam_inclinations)
-        pcd_world = (np.pad(lidar_point[...,:3], ((0,0),(0, 1)), constant_values=1) @ l2w.T)[:,:3]
-        pcds.append(pcd_world)
-
-        image_lidar = np.concatenate(
-            [
-                ray_drop,
-                np.clip(range_view[:, :, 1, None], 0, 1),
-                range_view[:, :, 2, None]
-            ],
-            axis=-1,
-        )
-
-        # render dir 
-        i, j = np.meshgrid(np.arange(W_lidar, dtype=np.float32),
-                        np.arange(H_lidar, dtype=np.float32),
-                        indexing='xy')
-        beta = -(i - W_lidar / 2.0) / W_lidar * 2.0 * np.pi
-        alpha = np.expand_dims(beam_inclinations[::-1], 1).repeat(W_lidar, 1)
-        dirs = np.stack([
-            np.cos(alpha) * np.cos(beta),
-            np.cos(alpha) * np.sin(beta),
-            np.sin(alpha),
-        ], -1)
-
-
-            # 存取每帧相机信息
-        cam_infos.append(CameraInfo(uid=idx, R=R, T=T, FovY=FovY, FovX=FovX, image=image_lidar,
-                        image_path=image_path, image_name=image_name, width=W_lidar, height=H_lidar,beam_inclinations = beam_inclinations,lidar_center=lidar_center,ray_dir=dirs))
-        # break   # 只取一帧
-        
-    
-    # 用于初始化gs的点云
-    pointcloud = np.concatenate(pcds, axis=0)
-    indices = np.random.choice(pointcloud.shape[0], 500000, replace=True) # 随机取100w个点 hardcode TODO 增加到配置文件
-    pointcloud = pointcloud[indices]
-
-    return cam_infos,pointcloud,ply_path
-    
-def readwaymoInfo_temp(path, white_background, eval, data_label, extension=".png", ply_path=None): 
-    print("Reading Training Transforms")
-    if data_label == "waymo":
-        cam_infos,pointcloud,ply_path = waymo_readCamerasFromTransforms_temp(path, "transforms_train.json", white_background, extension,data_label)
-    else:
-        cam_infos,pointcloud,ply_path = waymo_readCamerasFromTransforms_temp(path, "transforms_"+data_label+"_train.json", white_background, extension,data_label)
-
-    # train_cam_infos = [c for idx, c in enumerate(cam_infos) if (idx+1)%20 != 0]  
-    # test_cam_infos = [c for idx, c in enumerate(cam_infos) if (idx+1)%20 == 0]  
-    train_cam_infos = cam_infos
-    test_cam_infos = []
-    # for idx, c in enumerate(cam_infos):
-    #     if data_label == "waymo":
-    #         if idx == 10 or idx == 20 or idx == 31 or idx == 41:
-    #             test_cam_infos.append(c)
-    #         else:
-    #             train_cam_infos.append(c)
-    #     else:
-    #         if idx == 13 or idx == 26 or idx == 39:
-    #             test_cam_infos.append(c)
-    #         else:
-    #             train_cam_infos.append(c)
-
-    nerf_normalization = getNerfppNorm(train_cam_infos)
-
-
-    # if os.path.exists(ply_path):  
-    #     os.remove(ply_path)#删除文件
-    if not os.path.exists(ply_path):
-                # 初始化颜色和法向量
-        num_pts = pointcloud.shape[0]
-        shs = np.zeros((num_pts,3)) # np.random.random((num_pts, 3)) / 255.0
-        pcd = BasicPointCloud(points=pointcloud, colors=SH2RGB(shs), normals=np.zeros((num_pts, 3)))
-        
-        storePly(ply_path, pointcloud, SH2RGB(shs) * 255)
-    try:
-        pcd = fetchPly(ply_path)
-    except:
-        pcd = None
-
-    scene_info = SceneInfo(point_cloud=pcd,
-                           train_cameras=train_cam_infos,
-                           test_cameras=test_cam_infos,
-                           nerf_normalization=nerf_normalization,
-                           ply_path=ply_path)
-    return scene_info
 #############################################################################################################
-from scene.gt_readers import readgtInfo
+from scene.dataset_readers_dynmaic import readDynamicWaymoInfo
 sceneLoadTypeCallbacks = {
     "Colmap": readColmapSceneInfo,
     "Blender": readNerfSyntheticInfo,
     "waymo": readwaymoInfo,
-    "waymo_demo":readwaymoInfo_temp,
-    "gt2": readgtInfo
+    "waymo_dynamic":readDynamicWaymoInfo,
+
 }

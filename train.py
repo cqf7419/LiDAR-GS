@@ -326,7 +326,7 @@ def training_report(tb_writer, opt, dataset_name, iteration, Ll1, depth_loss, lo
                     if tb_writer and (idx < 10):
                         from utils.general_utils import colormap
                         depth = render_pkg["depth"] * ray_drop
-                        depth = depth / 80.0 # max depth = 80
+                        depth = depth / opt.depth_max
                         depth = colormap(depth.cpu().numpy()[0], cmap='turbo')
                         tb_writer.add_images(f'{dataset_name}/'+config['name'] + "_view_{}/depth".format(viewpoint.image_name), depth[None], global_step=iteration)
                         tb_writer.add_images(f'{dataset_name}/'+config['name'] + "_view_{}/render".format(viewpoint.image_name), image[None], global_step=iteration)
@@ -580,15 +580,12 @@ if __name__ == "__main__":
     parser.add_argument('--detect_anomaly', action='store_true', default=False)
     parser.add_argument('--warmup', action='store_true', default=False)
     parser.add_argument('--use_wandb', action='store_true', default=False)
-    # parser.add_argument("--test_iterations", nargs="+", type=int, default=[3_000, 7_000, 30_000])
-    # parser.add_argument("--save_iterations", nargs="+", type=int, default=[3_000, 7_000, 30_000])
-    parser.add_argument("--test_iterations", nargs="+", type=int, default=[300,500,800,1000,1500,2000,2500,3_000,3500,4000,4500,5000, 7_000])
-    parser.add_argument("--save_iterations", nargs="+", type=int, default=[2000, 3_000,4000,5000,6000, 7_000])
+    parser.add_argument("--test_iterations", nargs="+", type=int, default=[2000,3_000,4000,5000,6000,7_000])
+    parser.add_argument("--save_iterations", nargs="+", type=int, default=[2000,3_000,4000,5000,6000,7_000])
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--checkpoint_iterations", nargs="+", type=int, default=[])
     parser.add_argument("--start_checkpoint", type=str, default = None)
     parser.add_argument("--gpu", type=str, default = '-1')
-    # parser.add_argument("--data_label", type=str, default = None)
     args = parser.parse_args(sys.argv[1:])
     args.save_iterations.append(args.iterations)
 

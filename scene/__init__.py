@@ -41,14 +41,13 @@ class Scene:
         self.train_cameras = {}
         self.test_cameras = {}
 
-        if os.path.normpath(args.source_path).split(os.path.sep)[-2]=="gt2":
-            scene_info = sceneLoadTypeCallbacks["gt2"](args.source_path, args.white_background, args.eval)
-        elif os.path.exists(os.path.join(args.source_path, "sparse")):
+        if os.path.exists(os.path.join(args.source_path, "sparse")):
             scene_info = sceneLoadTypeCallbacks["Colmap"](args.source_path, args.images, args.eval, args.lod)
         elif os.path.exists(os.path.join(args.source_path, "transforms_train.json")):
-            print("Found transforms_train.json file, assuming Blender data set!")
             scene_info = sceneLoadTypeCallbacks["waymo"](args.source_path, args.white_background, args.eval, args.data_label)
             # scene_info = sceneLoadTypeCallbacks["waymo_demo"](args.source_path, args.white_background, args.eval, args.data_label)
+        elif os.path.exists(os.path.join(args.source_path, "range_images1.npy")):
+            scene_info = sceneLoadTypeCallbacks["waymo_dynamic"](args.source_path, args.white_background, args.eval, args.data_label)
         else:
             assert False, "Could not recognize scene type!"
 
@@ -61,16 +60,6 @@ class Scene:
             else:
                 with open(scene_info.ply_path, 'rb') as src_file, open(os.path.join(self.model_path, "input.ply") , 'wb') as dest_file:
                     dest_file.write(src_file.read())
-            # json_cams = []
-            # camlist = []
-            # if scene_info.test_cameras:
-            #     camlist.extend(scene_info.test_cameras)
-            # if scene_info.train_cameras:
-            #     camlist.extend(scene_info.train_cameras)
-            # for id, cam in enumerate(camlist):
-            #     json_cams.append(camera_to_JSON(id, cam))
-            # with open(os.path.join(self.model_path, "cameras.json"), 'w') as file:
-            #     json.dump(json_cams, file)
 
         if shuffle:
             random.shuffle(scene_info.train_cameras)  # Multi-res consistent random shuffling
@@ -78,7 +67,6 @@ class Scene:
 
         self.cameras_extent = scene_info.nerf_normalization["radius"]
 
-        # print(f'self.cameras_extent: {self.cameras_extent}')
 
         for resolution_scale in resolution_scales:
             print("Loading Training Cameras")

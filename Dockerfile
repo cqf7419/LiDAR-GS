@@ -56,7 +56,7 @@ RUN rm ./install/cuda_12.2.0_535.54.03_linux.run
 # 先创建一个assets文件夹，把vscode上传到oss上，再下载到这个assets文件夹里
 RUN mkdir asserts
 
-RUN wget http://auto-car-preprocess.oss-cn-zhangjiakou.aliyuncs.com/lansheng/code-server_4.23.1_amd64.deb -P ./asserts/
+RUN wget http://xxxxxxxxx/code-server_4.23.1_amd64.deb -P ./asserts/
 
 RUN dpkg -i ./asserts/code-server_4.23.1_amd64.deb 
 # && rm asserts/code-server_4.1.0_amd64.deb
