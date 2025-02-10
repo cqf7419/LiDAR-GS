@@ -77,7 +77,7 @@ logdir='waymo_seq1067'
 
 - Dynamic dataset ( ref to [DyNFL](https://github.com/prs-eth/Dynamic-LiDAR-Resimulation) )
   - you can download preprocessed [5scene](https://github.com/prs-eth/Dynamic-LiDAR-Resimulation/tree/master/WaymoPreprocessing) from DyNFL
-  - addition, you should download `lidar_calibration.parquet` from official link（To be updated）
+  - addition, you should download `lidar_calibration.parquet` from [official link](https://console.cloud.google.com/storage/browser/waymo_open_dataset_v_2_0_0/training/lidar_calibration?pageState=(%22StorageObjectListTable%22:(%22f%22:%22%255B%255D%22))&inv=1&invt=AbpKew)
 
 
 
