@@ -36,7 +36,7 @@ import torchvision.transforms.functional as tf
 import lpips
 from random import randint
 from utils.loss_utils import l1_loss, ssim,raydrop_lossf,l2_loss
-from gaussian_renderer import prefilter_voxel, render, network_gui
+from gaussian_renderer import prefilter_voxel, render
 import sys
 from scene import Scene, GaussianModel
 from utils.general_utils import safe_state

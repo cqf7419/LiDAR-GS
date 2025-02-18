@@ -50,15 +50,13 @@ Ref to [dockerfile](https://github.com/cjlunmh/LiDAR-GS/blob/main/Dockerfile)
 
 Then 
 ```
-pip install submodules/simple-knn
+pip install submodules/simple-knn (Get it from the vanilla 3dgs)
 pip install submodules/diff_lidargs_rasterization
-(optional)
-pip install submodules/diff_lidargs_surfel_rasterization 
+pip install submodules/diff_lidargs_surfel_rasterization (optional)
 ```
+Recently, we have achieved better results with second library in real vehicles. You may need to adjust some parameters. and we'll put a separate document to discuss it.
 
 ## Prepare Dataset
-Details coming soon ...
-
 - Static dataset ( ref to [AlignMiF](https://github.com/tangtaogo/alignmif) )
   - eg. Waymo Dataset:
 Following AlignMiF's dataset preprocess, you can obtain the following file formats in `data/waymo`：
@@ -88,7 +86,18 @@ Guidance is coming soon ...
   ```
   bash train.sh
   ```
-- Training of dynamic dataset: ...
+- Training of dynamic dataset: 
+  ```
+  The code will be open sourced
+  ```
+- Inference of render: 
+  ```
+  # Remember to apply the raydrop mask during inference
+  _render_raydrop = render_pkg["render"][1:2,...]
+  render_raydrop = torch.where(_render_raydrop > 0.5, 1, 0)
+  render_depth = render_depth * render_raydrop
+  ## 
+  ```
 
 
 ## Citation
