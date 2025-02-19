@@ -92,6 +92,7 @@ class waymo_dynamic:
         self.object_ids_per_frame = np.load(self.context_dir/'object_ids_per_frame.npy', allow_pickle=True)
 
         df = pd.read_parquet(self.context_dir/"training_lidar_calibration.parquet", engine="pyarrow",columns=["[LiDARCalibrationComponent].beam_inclination.values"])
+        ## 可视化df.to_csv('output_v_pose.csv')
         self.beam_inclinations = df.iloc[4,0]
         self.l2w = []
         pcds = []

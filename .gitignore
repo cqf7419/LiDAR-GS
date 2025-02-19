@@ -36,7 +36,6 @@ outputs/
 outputs_0124/
 convert.py
 create_data.sh
-train_dynamic.py
 render.py
 
 **/__pycache__
