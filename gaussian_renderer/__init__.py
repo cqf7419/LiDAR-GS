@@ -255,3 +255,133 @@ def prefilter_voxel(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch
         cov3D_precomp = cov3D_precomp)
 
     return radii_pure > 0
+
+
+def renderComposite(viewpoint_cam, background, pipe, valid_model_info, retain_grad=True):
+    total_opacity_dict = {}
+    total_mask_dict = {}
+    total_visable_dict = {}
+    total_xyz = None
+    total_color = None
+    total_opacity = None
+    total_scaling = None
+    total_rot = None
+    total_points_with_model_id = None
+    total_screenspace_points = None    
+
+    init = False
+    for model_info in valid_model_info:
+        data_type = model_info.model_gaussians.get_anchor.dtype
+        model_visible_mask = prefilter_voxel(
+            model_info.model_view,
+            model_info.model_gaussians,
+            pipe,
+            background
+        )
+        model_xyz, model_color, model_opacity, model_scaling, model_rot, neural_opacity, mask = (
+            generate_neural_gaussians(
+                model_info.model_view,
+                model_info.model_gaussians,
+                model_visible_mask,
+                True
+            )
+        )
+        total_opacity_dict[model_info.model_id] = neural_opacity
+        total_mask_dict[model_info.model_id] = mask
+        total_visable_dict[model_info.model_id] = model_visible_mask
+
+        curr_screenspace_points = torch.zeros((model_xyz.shape[0], 4), dtype=data_type, requires_grad=model_info.need_train, device="cuda")
+        curr_points_with_model_id = torch.full((model_xyz.shape[0],), model_info.model_id)
+
+        model_to_world_r = (
+            torch.from_numpy(model_info.model_pose[:3, :3]).cuda().to(torch.float32)
+        )
+        model_to_world_t = (
+            torch.from_numpy(model_info.model_pose[:3, 3]).cuda().to(torch.float32)
+        )
+        model_to_world_q = Rotation.from_matrix(
+            torch.from_numpy(model_info.model_pose[:3, :3])
+        ).as_quat()  # x y z w
+        w1 = model_to_world_q[3]
+        x1 = model_to_world_q[0]
+        y1 = model_to_world_q[1]
+        z1 = model_to_world_q[2]
+
+        w2 = model_rot[:, 0]
+        x2 = model_rot[:, 1]
+        y2 = model_rot[:, 2]
+        z2 = model_rot[:, 3]
+        model_rot[:, 0] = w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2
+        model_rot[:, 1] = w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2
+        model_rot[:, 2] = w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2
+        model_rot[:, 3] = w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2
+
+        model_xyz = model_to_world_r @ model_xyz.t() + model_to_world_t.reshape(3, 1)
+
+        if not init:
+            total_xyz = model_xyz.t()
+            total_color = model_color
+            total_opacity = model_opacity
+            total_scaling = model_scaling
+            total_rot = model_rot
+            total_screenspace_points = curr_screenspace_points
+            total_points_with_model_id = curr_points_with_model_id
+            init = True
+        else:
+            total_xyz = torch.cat((total_xyz, model_xyz.t()), dim=0)
+            total_color = torch.cat((total_color, model_color), dim=0)
+            total_opacity = torch.cat((total_opacity, model_opacity), dim=0)
+            total_scaling = torch.cat((total_scaling, model_scaling), dim=0)
+            total_rot = torch.cat((total_rot, model_rot), dim=0)
+            total_screenspace_points = torch.cat((total_screenspace_points, curr_screenspace_points), dim=0)
+            total_points_with_model_id = torch.cat((total_points_with_model_id, curr_points_with_model_id), dim = 0)
+
+    tanfovx = math.tan(viewpoint_cam.FoVx * 0.5)
+    tanfovy = math.tan(viewpoint_cam.FoVy * 0.5)
+    if retain_grad:
+        try:
+            total_screenspace_points.retain_grad()
+        except:
+            pass
+
+    raster_settings = GaussianRasterizationSettings(
+        image_height=int(viewpoint_cam.image_height),
+        image_width=int(viewpoint_cam.image_width),
+        tanfovx=tanfovx,
+        tanfovy=tanfovy,
+        bg=background,
+        scale_modifier=1.0,
+        viewmatrix=viewpoint_cam.world_view_transform,
+        projmatrix=viewpoint_cam.full_proj_transform,
+        sh_degree=1,
+        campos=viewpoint_cam.lidar_center,
+        prefiltered=False,
+        beam_inclinations = viewpoint_cam.beam_inclinations,  # TODO 输入一个beam
+        debug=pipe.debug
+    )
+
+    rasterizer = GaussianRasterizer(raster_settings=raster_settings)
+    
+    # Rasterize visible Gaussians to image, obtain their radii (on screen). 
+    rendered_image, depth, occ, radii = rasterizer(
+        means3D = total_xyz,
+        means2D = total_screenspace_points,
+        shs = None,
+        colors_precomp = total_color,
+        opacities = total_opacity,
+        scales = total_scaling,
+        rotations = total_rot,
+        cov3D_precomp = None)
+
+    return {"render": rendered_image,
+            "depth":depth,
+            "occ":occ,
+            "viewspace_points": total_screenspace_points,
+            "visibility_filter" : radii > 0,
+            "radii": radii,
+            "points_with_model_id": total_points_with_model_id,
+            "selection_mask": total_mask_dict,
+            "visable_mask": total_visable_dict,
+            "neural_opacity": total_opacity_dict,
+            "scaling": total_scaling,
+            }
