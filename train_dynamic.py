@@ -38,7 +38,8 @@ from random import randint
 from utils.loss_utils import l1_loss, ssim,raydrop_lossf,l2_loss
 from gaussian_renderer import prefilter_voxel, render, network_gui, renderComposite
 import sys
-from scene import Scene, GaussianModel
+from scene import DynamicScene as Scene
+from scene import GaussianModel
 from scene.cameras import Camera
 from scene.waymoDynamic import waymo_dynamic
 
