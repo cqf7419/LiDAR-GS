@@ -3,6 +3,7 @@
 
 # train
 ```
+pip install submodules/diff_lidargs_surfel_rasterization
 bash _exp/train_waymo1.sh
 ```
 
