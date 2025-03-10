@@ -573,6 +573,7 @@ if __name__ == "__main__":
         gt_dynamic_model = GT_Dataloader(model_args, train = True, train_frame_times=train_frame_times)
         model_args.block_id = block_id # update block id
         training(gt_dynamic_model, model_args, op.extract(args), pp.extract(args), dataset,  args.test_iterations, args.save_iterations, args.checkpoint_iterations, args.start_checkpoint, args.debug_from, logger)
+        break ## 不做全场景的训练 太大了很浪费时间
     
     # All done
     logger.info("\nTraining complete.")

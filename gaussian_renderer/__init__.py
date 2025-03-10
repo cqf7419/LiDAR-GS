@@ -33,8 +33,7 @@ def generate_neural_gaussians(viewpoint_camera, pc : GaussianModel, visible_mask
     if is_trick:
         ob_view = anchor - viewpoint_camera.lidar_center#viewpoint_camera.original_lidar_center if viewpoint_camera.original_lidar_center is not None else anchor - viewpoint_camera.lidar_center
     else:
-        ob_view = anchor - viewpoint_camera.camera_center
-    # ob_view = anchor - viewpoint_camera.camera_center # 对于obj来说 camera_center 与lidar center不同 这是个bug 三方迁移五方只能将错就错
+        ob_view = anchor - viewpoint_camera.camera_center# 对于obj来说 camera_center 与lidar center不同 这是个bug 暂时将错就错
 
     # dist
     ob_dist = ob_view.norm(dim=1, keepdim=True)
@@ -269,7 +268,7 @@ def renderComposite(viewpoint_cam, background, pipe, valid_model_info, max_depth
             rotations = total_rot,
             cov3D_precomp = None)
         depth = allmap_2[0:1]
-        rendered_image[1:2] = rendered_image_2[1:2] # TODO 静态植入要加入随机的物体级的dropout，所以要更新raydrop，但是理论上自车的raydrop应该是最高优先级
+        rendered_image[1:2] = rendered_image_2[1:2]
     
     # rendered_image = rendered_image_2
     # radii = radii_2
@@ -369,7 +368,7 @@ def render(viewpoint_cam, background, pipe, gs, max_depth, insert_objs=None, ret
             
             obj_screenspace_points = torch.zeros((each_obj["xyz"].shape[0], 4), dtype=xyz.dtype, requires_grad=is_training, device="cuda")
             screenspace_points = torch.cat((screenspace_points, obj_screenspace_points), dim=0)
-        rendered_image_2, radii_2, allmap_2, _  = rasterizer2(
+        rendered_image_2, radii_2, allmap_2, _  = rasterizer(
             means3D = xyz,
             means2D = screenspace_points,
             shs = None,

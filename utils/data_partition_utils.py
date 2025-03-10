@@ -11,7 +11,7 @@ from scipy.spatial.transform import Rotation
 chunk_max_image = 150
 chunk_min_image = 30
 
-def getMindFreeInfo(args):
+def getInfo(args):
     pkl_file_name = args.caseid + ".pkl"
     meta_file = os.path.join(args.source_path, "meta_infos", pkl_file_name)
     meta_info = pickle.load(open(meta_file, "rb"))
@@ -41,112 +41,15 @@ def getMindFreeInfo(args):
     print("Delta y: ", max_y - min_y)
     return time_with_pose, min_x, min_y, max_x, max_y
 
-def getParaLaneInfoV2(args):
-    ## 还有问题 这里算出来的json在加载数据时会有问题 先不管 和相机保持一致吧
-    max_x = -sys.maxsize
-    max_y = -sys.maxsize
-    min_x = sys.maxsize
-    min_y = sys.maxsize
-    time_with_pose = {}
-    cases = ["GT2-00006_20240614143004_20240614143030_8", "GT2-00006_20240614150446_20240614150512_9", "GT2-00006_20240614154135_20240614154201_10"]
-    for case in cases:
-        file_path = args.source_path + "/temp/"+ case +"/annotation/single_frame_cloud_poses.txt"
-        with open(file_path, 'r') as file:
-            for idx, line in enumerate(file):
-                data = line.strip().split()
-                lidar_timestamp = data[1].replace('.', '')
-                length_timestamp = len(lidar_timestamp)
-                if length_timestamp < 16:
-                    zeros_needed = 16 - length_timestamp
-                    lidar_timestamp += '0' * zeros_needed
-
-                quaternion = [
-                    float(data[4]),
-                    float(data[5]),
-                    float(data[6]),
-                    float(data[7]),
-                ]
-                rot_matrix = Rotation.from_quat(quaternion).as_matrix()
-
-                lidar2world = np.eye(4)
-                lidar2world[:3, :3] = rot_matrix
-                lidar2world[0, 3] = data[8]
-                lidar2world[1, 3] = data[9]
-                lidar2world[2, 3] = data[10]
-                min_x = min(min_x, float(lidar2world[0, 3]))
-                min_y = min(min_y, float(lidar2world[1, 3]))
-                max_x = max(max_x, float(lidar2world[0, 3]))
-                max_y = max(max_y, float(lidar2world[1, 3]))
-                time_with_pose[lidar_timestamp] = (float(lidar2world[0, 3]), float(lidar2world[1, 3]))
-                if idx == args.para_lane_single_length - 1: break
-    min_x = math.floor(min_x)
-    min_y = math.floor(min_y)
-    max_x = math.ceil(max_x)
-    max_y = math.ceil(max_y)
-    print("Delta x: ", max_x - min_x)
-    print("Delta y: ", max_y - min_y)
-    return time_with_pose, min_x, min_y, max_x, max_y
-
-def getParaLaneInfo(args):
-    max_x = -sys.maxsize
-    max_y = -sys.maxsize
-    min_x = sys.maxsize
-    min_y = sys.maxsize
-    time_with_pose = {}
-
-    init_pose = None
-    for track_name in args.para_lane_track_list:
-        data_path = os.path.join(args.source_path, "pack", args.para_lane_scene, track_name)
-        cameras_extrinsic_file = os.path.join(data_path, "sparse/0", "images_CAMERA_FRONT.txt")
-        cam_extrinsics = readExtrinsicsText(cameras_extrinsic_file)
-
-        for idx, key in enumerate(cam_extrinsics):
-            extr = cam_extrinsics[key]
-            image_name = extr.name
-            timestamp = extr.name.split("/")[0]
-            world_to_camera = np.eye(4)
-            world_to_camera[:3, :3] = qvec2rotmat(extr.qvec)
-            world_to_camera[:3, 3] = np.array(extr.tvec)
-            
-            if init_pose is None:
-                init_pose = world_to_camera
-                camera_pose = np.eye(4)
-            else:
-                camera_to_world = np.linalg.inv(world_to_camera)
-                camera_pose = init_pose @ camera_to_world
-
-            time_with_pose[timestamp] = (float(camera_pose[0, 3]), float(camera_pose[2, 3]))
-            min_x = min(min_x, float(camera_pose[0, 3]))
-            min_y = min(min_y, float(camera_pose[2, 3]))
-            max_x = max(max_x, float(camera_pose[0, 3]))
-            max_y = max(max_y, float(camera_pose[2, 3]))
-
-            if idx == args.para_lane_single_length - 1:
-                break
-
-    min_x = math.floor(min_x)
-    min_y = math.floor(min_y)
-    max_x = math.ceil(max_x)
-    max_y = math.ceil(max_y)
-    print("Delta x: ", max_x - min_x)
-    print("Delta y: ", max_y - min_y)
-
-    return time_with_pose, min_x, min_y, max_x, max_y, init_pose
 
 def dataPartition(args):
     if args.caseid != "None" and args.caseid != "pesudo":
         use_downsample = False
         chunk_size = 60 # 40
         expand_size = 10
-        time_with_pose, min_x, min_y, max_x, max_y = getMindFreeInfo(args)
+        time_with_pose, min_x, min_y, max_x, max_y = getInfo(args)
     else:
-        use_downsample = False
-        chunk_size = 25
-        expand_size = 5
-        time_with_pose, min_x, min_y, max_x, max_y, init_pose = getParaLaneInfo(args)
-        np.savetxt(os.path.join(args.model_path, "para_lane_init_pos.txt"), init_pose, delimiter=",", fmt="%.2f")
-    # else:
-    #     exit(1)
+        exit(1)
 
     block_id_with_rect = {}
     block_time_with_extend = {}

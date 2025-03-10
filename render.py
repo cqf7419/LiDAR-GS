@@ -276,25 +276,3 @@ if __name__ == "__main__":
         objs = None
         render_sets(gt_dynamic_model, model_args, 4000, pipeline.extract(args), args.skip_train, args.skip_test, args.insert_static_obj, args.insert_dynamic_obj, objs)
         
-        # path="/mnt_gx/usr/lansheng/workspace/LiDAR-GS-dynamic/LiDAR_GS/outputs/waymo/segment-1083056852838271990_4080_000_4100_000_with_camera_labels/render_point_3000"
-        # for frame_id in tqdm(train_frame_times):
-        #     render_txt_path = os.path.join(path, str(block_id), str(frame_id).zfill(3)+"_render_points.txt")
-        #     gt_txt_path = os.path.join(path, str(block_id), str(frame_id).zfill(3)+"_gt__points.txt")
-        #     gt_point_with_intensity = np.loadtxt(gt_txt_path, skiprows=2)
-        #     point_with_intensity = np.loadtxt(render_txt_path, skiprows=2)
-        #     make_raydrop = filter_pcd(point_with_intensity[:,:3])
-        #     point_with_intensity = point_with_intensity[make_raydrop]
-
-        #     # sensor2baselidar = gt_dynamic_model.get_sensor2baselidar(0) 
-        #     # points = point_with_intensity[:,:3]
-        #     # points = (np.pad(points[...,:3], ((0,0),(0, 1)), constant_values=1) @ sensor2baselidar.T)[:,:3]  
-        #     # point_with_intensity[:,:3] = points
-        #     # gt_points = gt_point_with_intensity[:,:3]
-        #     # gt_points = (np.pad(gt_points[...,:3], ((0,0),(0, 1)), constant_values=1) @ sensor2baselidar.T)[:,:3] 
-        #     # gt_point_with_intensity[:,:3] = gt_points
-
-        #     # header = "X Y Z Intensity\n"  # 保存点云
-        #     render_path = "/mnt_gx/usr/lansheng/workspace/LiDAR-GS-dynamic/LiDAR_GS/outputs/waymo/segment-1083056852838271990_4080_000_4100_000_with_camera_labels/render"
-        #     gt_path = "/mnt_gx/usr/lansheng/workspace/LiDAR-GS-dynamic/LiDAR_GS/outputs/waymo/segment-1083056852838271990_4080_000_4100_000_with_camera_labels/gt"
-            # np.savetxt(os.path.join(render_path, "{}.txt".format(str(frame_id).zfill(3))), point_with_intensity, fmt='%.4f', comments='') # header=header,
-            # np.savetxt(os.path.join(gt_path, "{}.txt".format(str(frame_id).zfill(3))), gt_point_with_intensity, fmt='%.4f', comments='') # header=header,
