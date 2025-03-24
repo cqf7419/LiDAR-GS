@@ -209,7 +209,6 @@ class Waymo_Dataloader:
         return pcds, l2ws#, pcds_label
         
     def judgeLoadtype(self):
-        obj_path = "/mnt_gx/lidar_data/datapublic_old/waymo_train/temp/segment-15832924468527961_1564_160_1584_160_with_camera_labels/occ/preproc/dynamic/objects"
         dynamic_path = os.path.join(self.root_path, "temp", self.case, "occ/preproc/dynamic/objects")
         first_obj = os.listdir(dynamic_path)[0]
         for file in os.listdir(os.path.join(dynamic_path, first_obj)):

@@ -1,13 +1,12 @@
 
 # pip install submodules/diff_lidargs_surfel_rasterization
-path="/home/xuanyuan/test2/LiDAR_GS(Waymo)"
-cd $path
+path="/home/xuanyuan/test2/LiDAR_GS(Waymo)" # # Replace it with the workspace path
 iterations=4000
 output_dir="./outputs"
 gpu=0
 
 casename="waymo"
-data="/home/xuanyuan/lansheng/waymo_train"
+data="/home/xuanyuan/lansheng/waymo_train" # Replace it with the path where you unzipped the file
 
 caseid="segment-1005081002024129653_5313_150_5333_150_with_camera_labels"
 logdir="$casename/$caseid"

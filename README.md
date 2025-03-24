@@ -28,7 +28,7 @@
 **[Abstract]**: LiDAR simulation plays a crucial role in closed-loop simulation for autonomous driving. Although recent advancements, such as the use of reconstructed mesh and Neural Radiance Fields (NeRF), have made progress in simulating the physical properties of LiDAR, these methods have struggled to achieve satisfactory frame rates and rendering quality. To address these limitations, we present **LiDAR-GS**, the first LiDAR Gaussian Splatting method, for real-time high-fidelity re-simulation of LiDAR sensor scans in public urban road scenes. The vanilla Gaussian Splatting, designed for camera models, cannot be directly applied to LiDAR re-simulation. To bridge the gap between passive camera and active LiDAR, our LiDAR-GS designs a differentiable laser beam splatting, grounded in the LiDAR range view model. This innovation allows for precise surface splatting by projecting lasers onto micro cross-sections, effectively eliminating artifacts associated with local affine approximations. Additionally, LiDAR-GS leverages Neural Gaussian Fields, which further integrate view-dependent clues, to represent key LiDAR properties that are influenced by the incident angle and external factors. Combining these practices with some essential adaptations, e.g., dynamic instances decomposition, our approach succeeds in simultaneously re-simulating depth, intensity, and ray-drop channels, achieving state-of-the-art results in both rendering frame rate and quality on publically available large scene datasets. 
 
 ## Updates
-- [2025-03-24] 🚀 The core code of dynamic waymo is publicly available. 🥰Supports long sequence reconstruction.
+- [2025-03-24] 🚀 The core code of dynamic waymo is publicly available. 🥰**Supports long sequence reconstruction**.
 - [2025-01-28] 🎉🧧 Happy New Year's Eve! The core code is publicly available.
 
 ## Feature
@@ -38,13 +38,12 @@
 ## Notes
 Since the pre-processed data link of DyNFL is invalid, we recently re-adapted the dataloader. So the code has been significantly changed.
 
-If you have good suggestions, welcome to raise an issue， and we will continue to improve it.
+From now on(03-24), the 'dynamic' branch will be the development branch. Static branches will be enabled gradually. 
 
-## Video
-[more results](https://github.com/cjlunmh/LiDAR-GS/blob/main/assets/video.mp4)
+I will optimize the code structure in free time. In addition, if you have any good suggestions about the algorithm implementation, please let us know and we will continue to improve it.
 
 ## Enrionment setup 
-Ref to [dockerfile](https://github.com/cjlunmh/LiDAR-GS/blob/main/Dockerfile)
+Ref to [dockerfile](https://github.com/cqf7419/LiDAR-GS/blob/dynamic/Dockerfile)
 
 Then 
 ```
@@ -54,6 +53,11 @@ pip install submodules/diff_lidargs_surfel_rasterization (optional)
 ```
 
 ## Prepare Dataset
+
+- (recommend) Dynamic waymo dataset
+  - We have reorganized the necessary data and deleted the unnecessary data. 
+  - 链接: https://pan.baidu.com/s/16OmYFjy7_-dhdjveWjY0OA 提取码: hryh 
+
 - Static dataset ( ref to [AlignMiF](https://github.com/tangtaogo/alignmif) )
   - eg. Waymo Dataset:
 Following AlignMiF's dataset preprocess, you can obtain the following file formats in `data/waymo`：
@@ -69,11 +73,6 @@ you should change train.sh :
 data_path="data/waymo"
 logdir='waymo_seq1067'            
 ```
-
-- (recommend) Dynamic waymo dataset
-  - We have reorganized the necessary data and deleted the unnecessary data. 
-  - 链接: https://pan.baidu.com/s/1JDciX4Fw7qcMckXjlENX4Q 提取码: dbqx  
-
 - ~~Dynamic dataset ( ref to [DyNFL](https://github.com/prs-eth/Dynamic-LiDAR-Resimulation) )~~
   - ~~you can download preprocessed [5scene](https://github.com/prs-eth/Dynamic-LiDAR-Resimulation/tree/master/WaymoPreprocessing) from DyNFL~~
   - ~~addition, you should download `lidar_calibration.parquet` from [official link](https://console.cloud.google.com/storage/browser/waymo_open_dataset_v_2_0_0/training/lidar_calibration?pageState=(%22StorageObjectListTable%22:(%22f%22:%22%255B%255D%22))&inv=1&invt=AbpKew)~~
@@ -84,12 +83,19 @@ logdir='waymo_seq1067'
 
 - Training of static dataset (git clone from 'main' branch):
   ```
+  git clone https://github.com/cqf7419/LiDAR-GS.git -b main
   bash train.sh
   ```
-- Training of dynamic dataset (git clone from 'dynamic' branch): 
+- Training of long sequence dynamic dataset (git clone from 'dynamic' branch): 
   ```
+  git clone https://github.com/cqf7419/LiDAR-GS.git -b dynamic
   bash _exp/triain_waymo1.sh
   ```
+- If you only want to quickly verify on a **short sequence**, you can turn this on 
+
+  https://github.com/cqf7419/LiDAR-GS/blob/dynamic/utils/data_partition_utils.py#L26 \
+  or \
+  add a ‘break’ in https://github.com/cqf7419/LiDAR-GS/blob/dynamic/train.py#L552 
 - Inference of render: 
   ```
   # Remember to apply the raydrop mask during inference
@@ -99,6 +105,8 @@ logdir='waymo_seq1067'
   ## 
   ```
 
+## Video
+[more results](https://github.com/cqf7419/LiDAR-GS/blob/dynamic/assets/video.mp4)
 
 ## Citation
 
