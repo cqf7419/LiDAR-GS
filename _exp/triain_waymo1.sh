@@ -1,12 +1,13 @@
-cd /mnt_gx/usr/lansheng/workspace/LiDAR-GS-dynamic/LiDAR_GS
-pip install submodules/diff_lidargs_surfel_rasterization
 
+# pip install submodules/diff_lidargs_surfel_rasterization
+path="/home/xuanyuan/test2/LiDAR_GS(Waymo)"
+cd $path
 iterations=4000
 output_dir="./outputs"
 gpu=0
 
 casename="waymo"
-data="/mnt_gx/lidar_data/datapublic_old/waymo_train"
+data="/home/xuanyuan/lansheng/waymo_train"
 
 caseid="segment-1005081002024129653_5313_150_5333_150_with_camera_labels"
 logdir="$casename/$caseid"

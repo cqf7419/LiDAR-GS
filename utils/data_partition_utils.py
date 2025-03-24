@@ -23,6 +23,8 @@ def getInfo(args):
     min_y = sys.maxsize
     time_with_pose = {}
     for idx, info in enumerate(meta_info["frames"]):
+        # if idx<50: continue
+        # if idx>=100: break
         if 'optimized_pose' in info: 
             lidar_to_world = info["optimized_pose"] 
         else: 

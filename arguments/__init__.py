@@ -82,10 +82,6 @@ class ModelParams(ParamGroup):
         self.add_opacity_dist = False
         self.add_cov_dist = True
         self.add_color_dist = True
-
-        self.para_lane_scene = "scene_3"
-        self.para_lane_track_list = "track_0"#["track_0"] # , "track_1", "track_2"
-        self.para_lane_single_length = 240
         
         super().__init__(parser, "Loading Parameters", sentinel)
 

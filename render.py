@@ -68,11 +68,6 @@ class ValidModeInfo(NamedTuple):
 
 def render_set(gt_dynamic_model, dataset, name, iteration, valid_timestamp_model, model_id_scene_info, views, pipeline, background, insert_objs, insert_dynamic_obj=False):
     path_name = dataset.model_path.split("/")# /mnt_gx/usr/lansheng/workspace/LiDAR-GS-dynamic/LiDAR_GS/outputs/scene_3/track_0/TOP
-    # pesudo_path = os.path.join("/mnt_gx/cqf/LiDAR_Pesudo_Data/ParaLane", path_name[-3], path_name[-2]+"_to_"+dataset.para_lane_track_list[0] ,path_name[-1]) 
-    # render_path = os.path.join(pesudo_path, "renders")
-    # gt_path = os.path.join(pesudo_path, "gt")
-    # os.makedirs(render_path, exist_ok=True)
-    # os.makedirs(gt_path, exist_ok=True)
     render_path = os.path.join(dataset.model_path, "renders")
     gt_path = os.path.join(dataset.model_path, "gt")
     os.makedirs(render_path, exist_ok=True)
@@ -125,14 +120,10 @@ def render_set(gt_dynamic_model, dataset, name, iteration, valid_timestamp_model
         gt_depth = (gt[2:3,...] * ray_drop).detach().cpu().numpy()
         render_raydrop = rendering[1:2,...]
         render_raydrop_mask = torch.where(render_raydrop > 0.5, 1, 0)
-        if dataset.newcar_render == "GT2V1":
-            render_intensity = render_intensity*render_raydrop_mask*ray_drop # 直接使用gt的raydrop mask
-            depth = depth*render_raydrop_mask*ray_drop
-            occ = render_pkg["occ"]*render_raydrop_mask*ray_drop
-        else:
-            render_intensity = render_intensity*render_raydrop_mask*ray_drop
-            depth = depth*render_raydrop_mask*ray_drop
-            occ = render_pkg["occ"]*render_raydrop_mask*ray_drop
+
+        render_intensity = render_intensity*render_raydrop_mask*ray_drop
+        depth = depth*render_raydrop_mask*ray_drop
+        occ = render_pkg["occ"]*render_raydrop_mask*ray_drop
 
         depth_numpy = depth.detach().cpu().numpy()
         intensity_numpy = render_intensity.detach().cpu().numpy()
@@ -145,10 +136,7 @@ def render_set(gt_dynamic_model, dataset, name, iteration, valid_timestamp_model
             point_with_intensity = point_with_intensity[make_raydrop]
 
         if True:# 转到baselidar系
-            if name == "simulation_newcar":
-                sensor2baselidar = gt_dynamic_model.get_sensor2baselidar_newcar(dataset.sensorid)
-            else:
-                sensor2baselidar = gt_dynamic_model.get_sensor2baselidar(dataset.sensorid) 
+            sensor2baselidar = gt_dynamic_model.get_sensor2baselidar(dataset.sensorid) 
             points = point_with_intensity[:,:3]
             points = (np.pad(points[...,:3], ((0,0),(0, 1)), constant_values=1) @ sensor2baselidar.T)[:,:3]  
             point_with_intensity[:,:3] = points
@@ -230,8 +218,6 @@ def render_sets(gt_dynamic_model, dataset : ModelParams, iteration : int, pipeli
                     render_set(gt_dynamic_model, dataset, "simulation_add_manhole", iteration, valid_timestamp_model, model_id_scene_info, train_views, pipeline, background, insert_objs)
             elif insert_dynamic_obj:
                 render_set(gt_dynamic_model, dataset, "simulation_dynamic", iteration, valid_timestamp_model, model_id_scene_info, train_views, pipeline, background, insert_objs, insert_dynamic_obj=True)
-            elif dataset.newcar_render == "GT2V1":
-                render_set(gt_dynamic_model, dataset, "simulation_newcar", iteration, valid_timestamp_model, model_id_scene_info, train_views, pipeline, background, insert_objs)
             else:
                 render_set(gt_dynamic_model, dataset, "train", iteration, valid_timestamp_model, model_id_scene_info, train_views, pipeline, background, insert_objs)
 
@@ -257,18 +243,11 @@ if __name__ == "__main__":
     # Initialize system state (RNG)
     safe_state(args.quiet)
     model_args = model.extract(args)    
-    model_args.para_lane_track_list = args.para_lane_track_list.split(",")
-    print("para_lane_track_list", model_args.para_lane_track_list )
-    if args.caseid == "None":
-        from scene.GT_ParaLane_dataloader import GT_Dataloader
-        # block_info_with_extend, block_info_without_extend, _ , __= getBlockInfo("/mnt_gx/usr/lansheng/workspace/LiDAR-GS-dynamic/exp_bash/ParaLane")
-    elif args.caseid == 'pesudo':
-        from scene.GT_ParaLane_Common_dataloader import GT_Dataloader
+
+    if "segment" in args.caseid:
+            from scene.Waymo_Dynamic_dataloader import Waymo_Dataloader as GT_Dataloader
     else:
-        if "segment" in args.caseid:
-             from scene.Waymo_Dynamic_dataloader import Waymo_Dataloader as GT_Dataloader
-        else:
-            from scene.GT_Dynamic_dataloader import GT_Dataloader
+        from scene.GT_Dynamic_dataloader import GT_Dataloader
     block_info_with_extend, block_info_without_extend, _, __ = getBlockInfo(args.blockinfo)
     for block_id, train_frame_times in block_info_without_extend.items():
         gt_dynamic_model = GT_Dataloader(model_args, train=False, train_frame_times=train_frame_times)

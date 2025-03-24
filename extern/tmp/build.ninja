@@ -24,8 +24,8 @@ rule cuda_compile
 rule link
   command = $cxx $in $ldflags -o $out
 
-build chamfer_cuda.o: compile /mnt_gx/usr/lansheng/workspace/LiDAR-GS-dynamic/LiDAR_GS/extern/chamfer3D/chamfer_cuda.cpp
-build chamfer3D.cuda.o: cuda_compile /mnt_gx/usr/lansheng/workspace/LiDAR-GS-dynamic/LiDAR_GS/extern/chamfer3D/chamfer3D.cu
+build chamfer_cuda.o: compile /home/xuanyuan/test2/LiDAR_GS(Waymo)/extern/chamfer3D/chamfer_cuda.cpp
+build chamfer3D.cuda.o: cuda_compile /home/xuanyuan/test2/LiDAR_GS(Waymo)/extern/chamfer3D/chamfer3D.cu
 
 
 

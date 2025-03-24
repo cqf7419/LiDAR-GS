@@ -39,7 +39,6 @@ from gaussian_renderer import prefilter_voxel, render, renderComposite
 import sys
 from scene import Scene, GaussianModel
 from scene.cameras import Camera
-from scene.waymoDynamic import waymo_dynamic
 
 from utils.general_utils import safe_state
 import uuid
@@ -130,12 +129,12 @@ def training(gt_dynamic_model, dataset, opt, pipe, dataset_name, testing_iterati
             # model_id += 1
 
     ######### TODO 
-    test_timestamp = []#[10,20,31,41]
+    test_timestamp = [10,20,31,41]
     train_views = []
     test_views = []
     for idx, scene_view in enumerate(static_views):
         render_timestamp = scene_view.image_name
-        if render_timestamp in test_timestamp:
+        if idx in test_timestamp:
             test_views.append(scene_view)
         else:
             train_views.append(scene_view)
@@ -261,9 +260,7 @@ def training(gt_dynamic_model, dataset, opt, pipe, dataset_name, testing_iterati
         # dist_loss = lambda_dist * (rend_dist).mean()
         intensity_loss = ((1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * ssim_loss)
 
-        # loss = depth_loss + scaling_reg + intensity_loss + grad_loss if iteration <= (opt.update_until+1) and opt.multistep else raydrop_loss
         loss = depth_loss + scaling_reg + intensity_loss + grad_loss + raydrop_loss 
-            # loss_opa raydrop_loss
         loss.backward()
         
         # iter_end.record()
@@ -290,8 +287,8 @@ def training(gt_dynamic_model, dataset, opt, pipe, dataset_name, testing_iterati
                     model_id_scene_info, valid_timestamp_model, pipe, background, logger)
 
                 # print("---------------------test----------------------")
-                # train_composite_report(tb_writer, dataset_name, iteration, test_views, test_timestamp,\
-                #     model_id_scene_info, valid_timestamp_model, pipe, background, logger)
+                train_composite_report(tb_writer, dataset, dataset_name, iteration, test_views, test_timestamp,\
+                    model_id_scene_info, valid_timestamp_model, pipe, background, logger)
             for model_id, model_info in model_id_scene_info.items():
                 densify_until_num_points = opt.densify_until_num_points
 
@@ -411,30 +408,16 @@ def train_composite_report(tb_writer, model_args, dataset_name, iteration, stati
         gt_depth = gt_image[2:3,...] * ray_drop * gt_objmask
         render_intensity = image[0:1,...] 
 
-        if True:
-            render_raydrop = image[1:2,...]
-            render_raydrop_mask = torch.where(render_raydrop > 0.5, 1, 0)
-            render_intensity = render_intensity * ray_drop * render_raydrop_mask * gt_objmask# 直接使用gt的raydrop mask
-            depth = depth * ray_drop * render_raydrop_mask * gt_objmask
-            # mse_loss = torch.nn.MSELoss()
-            # raydrop_loss = 10 * mse_loss(render_raydrop,ray_drop)
-        
-        # if total_number<5: # test 
-        #     from utils.general_utils import colormap
-        #     tb_depth = depth / 50.0 
-        #     tb_depth = colormap(tb_depth.cpu().numpy()[0], cmap='turbo')
-        #     tb_writer.add_images(f'{dataset_name}/' + "_view_{}/depth".format(render_timestamp), tb_depth[None], global_step=iteration)
-        tb_writer.add_images(f'{dataset_name}/' + "_view_{}/render".format(render_timestamp), render_pkg["occ"][None], global_step=iteration)
-        #     tb_gt_depth = gt_depth / 50.0
-        #     tb_gt_depth = colormap(tb_gt_depth.cpu().numpy()[0], cmap='turbo')
-        #     tb_writer.add_images(f'{dataset_name}/'+ "_view_{}/ground_truth_depth".format(render_timestamp), tb_gt_depth[None], global_step=iteration)
+        render_raydrop = image[1:2,...]
+        render_raydrop_mask = torch.where(render_raydrop > 0.5, 1, 0)
+        render_intensity = render_intensity * ray_drop * render_raydrop_mask # Align with dynfl without considering raydrop
+        depth = depth * ray_drop * render_raydrop_mask 
+
 
         if iteration is not None:
             depth_numpy = depth.detach().cpu().numpy()
             intensity_numpy = render_intensity.detach().cpu().numpy()
             point_with_intensity = pano_to_lidar_with_intensities(depth_numpy[0, :, :],intensity_numpy[0], lidar_K=None, beam_inclinations=scene_view.beam_inclinations.detach().cpu().numpy())
-            # extre_raydrop = filter_pcd(point_with_intensity)
-            # point_with_intensity = point_with_intensity[extre_raydrop]
             
             gt_depth_numpy = gt_depth.detach().cpu().numpy()
             gt_intensity_numpy = gt_intensity.detach().cpu().numpy()
@@ -553,27 +536,18 @@ if __name__ == "__main__":
 
     # multi-block render for large scene
     model_args = lp.extract(args)
-    model_args.para_lane_track_list = args.para_lane_track_list.split(",")
-    print("para_lane_track_list", model_args.para_lane_track_list )
     
     # load dynamic info
-    if args.caseid == "None":
-        from scene.GT_ParaLane_dataloader import GT_Dataloader
-        # block_info_with_extend, block_info_without_extend, _ , __= getBlockInfo("/mnt_gx/usr/lansheng/workspace/LiDAR-GS-dynamic/exp_bash/ParaLane")
-    elif args.caseid == 'pesudo':
-        from scene.GT_ParaLane_Common_dataloader import GT_Dataloader
+    if "segment" in args.caseid:
+            from scene.Waymo_Dynamic_dataloader import Waymo_Dataloader as GT_Dataloader
     else:
-        if "segment" in args.caseid:
-             from scene.Waymo_Dynamic_dataloader import Waymo_Dataloader as GT_Dataloader
-        else:
-            from scene.GT_Dynamic_dataloader import GT_Dataloader
+        from scene.GT_Dynamic_dataloader import GT_Dataloader
     block_info_with_extend, block_info_without_extend = dataPartition(model_args)
 
     for block_id, train_frame_times in block_info_with_extend.items():
         gt_dynamic_model = GT_Dataloader(model_args, train = True, train_frame_times=train_frame_times)
         model_args.block_id = block_id # update block id
         training(gt_dynamic_model, model_args, op.extract(args), pp.extract(args), dataset,  args.test_iterations, args.save_iterations, args.checkpoint_iterations, args.start_checkpoint, args.debug_from, logger)
-        break ## 不做全场景的训练 太大了很浪费时间
     
     # All done
     logger.info("\nTraining complete.")

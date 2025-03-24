@@ -58,7 +58,7 @@ class Waymo_Dataloader:
             print("[ Info ] this case have {} frames totally".format(len(self.frames_data)))
 
         self.beam_inclinations = np.load(os.path.join(self.root_path, "temp", self.case, "beam_inclinations", "beam_inclinations.npy")).astype(np.float32).tolist() #TODO cal_beam_inclinations()
-        self.laser_calibrations = np.load(os.path.join(self.root_path, "temp", self.case, "laser_calibrations/laser_calibrations.npz"))
+        self.laser_calibrations = np.load(os.path.join(self.root_path, "laser_calibrations", self.case, "laser_calibrations/laser_calibrations.npz"))
         self.extrinsic = self.laser_calibrations['extrinsic'][0] # laser_to_vehicle
         print("beam_inclinations", self.beam_inclinations)
 
@@ -145,16 +145,6 @@ class Waymo_Dataloader:
             obj_pcd = np.array(o3d.io.read_point_cloud(pcd_path).points, dtype=np.float32)
         for key, value in data.items():
             b2l = np.array(value["T_b2l"], dtype=np.float32).reshape(4,4)
-            # each_frame_pcd_path = dynamic_obj_path +'/'+ value["name"]
-            # each_frame_pcd = o3d.io.read_point_cloud(each_frame_pcd_path).points
-            # each_frame_pcd = np.array(each_frame_pcd, dtype=np.float32)
-
-            # # vehicle_to_laser = np.linalg.inv(self.extrinsic)
-            # # obj_to_laser = vehicle_to_laser @ b2l
-            # # laser_to_world = self.l2ws[0]
-            # # obj_to_world = laser_to_world @ obj_to_laser
-            # # obj_world_pcd = (np.pad(obj_pcd, ((0,0),(0, 1)), constant_values=1) @ obj_to_world.T)[:,:3] 
-            # # np.savetxt("./temp_objworld.txt", obj_world_pcd, fmt='%.4f', comments='')  
             if int(key) < 200:   # obj存在两种命名格式 前后版本需要兼容以下
                 key = key.zfill(3)
             if key in self.timestep_2_frameid:  # TODO 
@@ -341,11 +331,4 @@ class Waymo_Dataloader:
 
     def get_lidar_res(self):
         return self.W_lidar, self.H_lidar
-
-# if __name__ == '__main__':
-#     root_path =  "/mnt_gx/ziqian_data/recon_cases_91115_default"
-#     case = "GT2-00007_20240402105310_20240402105440_128279484"
-#     GT_DATA = GT_Dataloader(root_path, case)
-#     # print(GT_DATA.frames_data[0]["path"]["pcd"])
-#     GT_DATA.load_dynamic_obj(root_path,case)
 

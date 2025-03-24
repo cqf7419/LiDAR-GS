@@ -172,7 +172,7 @@ __device__ bool cpmpute_pix(
 }
 // Computing the bounding box of the 2D Gaussian and its center
 // The center of the bounding box is used to create a low pass filter
-__device__ bool compute_aabb_cylinder( // 用最长轴近似半径
+__device__ bool compute_aabb_cylinder( // 用最长轴近似半径 .这显然不是最优， 可以参考一下GS-LiDAR的实现方法，它用贪心算法，划分12等分去遍历潜在最长轴
 	glm::mat3 T, 
 	float cutoff, 
 	// float2& point_image,
@@ -455,6 +455,7 @@ renderCUDA(
 			// if(lambda2<=0) continue; // 交点位于z负区域 不计算
 			// float alpha_pix = atan2f(p.y,1); // ray与世界坐标系xz平面的夹角
 			real_depth = lambda2; //* cos(alpha_pix);
+			if(real_depth<0) continue;
 			float3 real_p = {real_depth*p.x, real_depth*p.y, real_depth*p.z}; // ray与gs平面的交点
 			float3 dp = real_p - Tw; // view空间下交点与gs中心的相对位置向量
 			float Tu_Tu = Tu.x*Tu.x + Tu.y*Tu.y + Tu.z*Tu.z;
@@ -467,8 +468,8 @@ renderCUDA(
 			rho2d = FilterInvSquare * (40*d.x * d.x + 100*d.y * d.y);  // gs投影到像素平面计算的相对位置 // 这一步也是为了防止gs退化成点或者线
 
 			// compute intersection and depth
-			float rho = (real_depth>0)? min(rho3d, rho2d) : rho2d;
-			float depth = (rho3d <= rho2d && real_depth>0) ? real_depth : rho_r;  // 点(（s.x, s.y, 1）转乘Tw	 	gs坐标系下的点乘T转到img space 但由于只用z轴 所以只乘第三维	
+			float rho = rho3d; //(real_depth>0)? min(rho3d, rho2d) : rho2d;
+			float depth = real_depth;//(rho3d <= rho2d && real_depth>0) ? real_depth : rho_r;  // 点(（s.x, s.y, 1）转乘Tw	 	gs坐标系下的点乘T转到img space 但由于只用z轴 所以只乘第三维	
 			if (depth < near_n) continue;
 
 			float power = -0.5f * rho;

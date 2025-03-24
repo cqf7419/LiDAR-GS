@@ -311,6 +311,7 @@ renderCUDA(
 			// if(lambda2<=0) continue; // 交点位于z负区域 不计算 或者直接用rho2d 这样这部分的normal还会继续优化
 			// float alpha_pix = atan2f(p.y,1); // [-pi/2, pi/2]
  			float real_depth = lambda2 ;//* cos(alpha_pix);
+			if(real_depth<0) continue;
 			float3 real_p = {real_depth*p.x, real_depth*p.y, real_depth*p.z}; // ray与gs平面的交点
 			float3 dp = real_p - Tw; // view空间下交点与gs中心的相对位置向量
 			float Tu_Tu = Tu.x*Tu.x + Tu.y*Tu.y + Tu.z*Tu.z;
@@ -324,8 +325,8 @@ renderCUDA(
 			float rho2d = FilterInvSquare * (40*d.x * d.x + 100*d.y * d.y);  // gs投影到像素平面计算的相对位置 // 这一步也是为了防止gs退化成点或者线
 
 			// compute intersection and depth
-			float rho = (real_depth>0)? min(rho3d, rho2d) : rho2d;
-			float c_d = (rho3d <= rho2d && real_depth>0) ? real_depth : rho_r;
+			float rho = rho3d;//(real_depth>0)? min(rho3d, rho2d) : rho2d;
+			float c_d = real_depth; //(rho3d <= rho2d && real_depth>0) ? real_depth : rho_r;
 			if (c_d < near_n) continue;
 
 			// accumulations
@@ -424,7 +425,7 @@ renderCUDA(
 			float grad_alpha = 0;
 			grad_alpha = fabs(beam_inclinations[H-1] - beam_inclinations[0]) / (float(H)-1);
 
-			if (rho3d <= rho2d && real_depth>0) {
+			if (real_depth>0) { // rho3d <= rho2d && 
 				// // Update gradients w.r.t. covariance of Gaussian 3x3 (T)
 				float dL_dD = dL_dz;
 				// D = lambda2 * cos(alpha_pix)
@@ -575,28 +576,29 @@ renderCUDA(
 				atomicAdd(&dL_dmean2D[global_id].y, dL_dmean2dy); // not scaled
 				atomicAdd(&dL_dmean2D[global_id].z, fabs(dL_dmean2dx)); 
 				atomicAdd(&dL_dmean2D[global_id].w, fabs(dL_dmean2dy)); 
-			} else {
-				// // Update gradients w.r.t. center of Gaussian 2D mean position
-				const float dG_ddelx = -G * FilterInvSquare * 40 * d.x;
-				const float dG_ddely = -G * FilterInvSquare * 100 * d.y;
-				atomicAdd(&dL_dmean2D[global_id].x, dL_dG * dG_ddelx * 0.5 * W); // not scaled
-				atomicAdd(&dL_dmean2D[global_id].y, dL_dG * dG_ddely * 0.5 * H); // not scaled
-				atomicAdd(&dL_dmean2D[global_id].z, fabs(dL_dG * dG_ddelx * 0.5 * W)); 
-				atomicAdd(&dL_dmean2D[global_id].w, fabs(dL_dG * dG_ddely * 0.5 * H)); 
-				// float beta = pi - atan2(point.y, point.x);
-				// float p_c = beta / (2 * pi / float(W)); 
-				// float alpha = atan2(point.z, sqrt(point.x*point.x + point.y*point.y)); 
-				// int p_r_int = find_closest_label(beam_inclinations, alpha, H);
-				float rho_xy2 = sqrt(Tw.x*Tw.x + Tw.y*Tw.y);
-				float ddelx_dpx = float(W)/(2*pi)*Tw.y/(rho_xy2*rho_xy2);
-				float ddelx_dpy = -1.0*float(W)/(2*pi)*Tw.x/(rho_xy2*rho_xy2);
-				float ddely_dpx = grad_alpha*(-1.0)*Tw.z*Tw.x/(rho_r*rho_r*rho_xy2);
-				float ddely_dpy = grad_alpha*(-1.0)*Tw.z*Tw.y/(rho_r*rho_r*rho_xy2);
-				float ddely_dpz =  grad_alpha*rho_xy2/(rho_r*rho_r);
-				atomicAdd(&dL_dtransMat[global_id * 9 + 6], dL_dz * (Tw.x/rho_r) + dL_dG * (dG_ddelx * ddelx_dpx + dG_ddely * ddely_dpx));  
-				atomicAdd(&dL_dtransMat[global_id * 9 + 7], dL_dz * (Tw.y/rho_r) + dL_dG * (dG_ddelx * ddelx_dpy + dG_ddely * ddely_dpy)); 
-				atomicAdd(&dL_dtransMat[global_id * 9 + 8], dL_dz * (Tw.z/rho_r) + dL_dG * (dG_ddely * ddely_dpz));
-			}
+			} 
+			// else {
+			// 	// // Update gradients w.r.t. center of Gaussian 2D mean position
+			// 	const float dG_ddelx = -G * FilterInvSquare * 40 * d.x;
+			// 	const float dG_ddely = -G * FilterInvSquare * 100 * d.y;
+			// 	atomicAdd(&dL_dmean2D[global_id].x, dL_dG * dG_ddelx * 0.5 * W); // not scaled
+			// 	atomicAdd(&dL_dmean2D[global_id].y, dL_dG * dG_ddely * 0.5 * H); // not scaled
+			// 	atomicAdd(&dL_dmean2D[global_id].z, fabs(dL_dG * dG_ddelx * 0.5 * W)); 
+			// 	atomicAdd(&dL_dmean2D[global_id].w, fabs(dL_dG * dG_ddely * 0.5 * H)); 
+			// 	// float beta = pi - atan2(point.y, point.x);
+			// 	// float p_c = beta / (2 * pi / float(W)); 
+			// 	// float alpha = atan2(point.z, sqrt(point.x*point.x + point.y*point.y)); 
+			// 	// int p_r_int = find_closest_label(beam_inclinations, alpha, H);
+			// 	float rho_xy2 = sqrt(Tw.x*Tw.x + Tw.y*Tw.y);
+			// 	float ddelx_dpx = float(W)/(2*pi)*Tw.y/(rho_xy2*rho_xy2);
+			// 	float ddelx_dpy = -1.0*float(W)/(2*pi)*Tw.x/(rho_xy2*rho_xy2);
+			// 	float ddely_dpx = grad_alpha*(-1.0)*Tw.z*Tw.x/(rho_r*rho_r*rho_xy2);
+			// 	float ddely_dpy = grad_alpha*(-1.0)*Tw.z*Tw.y/(rho_r*rho_r*rho_xy2);
+			// 	float ddely_dpz =  grad_alpha*rho_xy2/(rho_r*rho_r);
+			// 	atomicAdd(&dL_dtransMat[global_id * 9 + 6], dL_dz * (Tw.x/rho_r) + dL_dG * (dG_ddelx * ddelx_dpx + dG_ddely * ddely_dpx));  
+			// 	atomicAdd(&dL_dtransMat[global_id * 9 + 7], dL_dz * (Tw.y/rho_r) + dL_dG * (dG_ddelx * ddelx_dpy + dG_ddely * ddely_dpy)); 
+			// 	atomicAdd(&dL_dtransMat[global_id * 9 + 8], dL_dz * (Tw.z/rho_r) + dL_dG * (dG_ddely * ddely_dpz));
+			// }
 
 			// Update gradients w.r.t. opacity of the Gaussian
 			atomicAdd(&(dL_dopacity[global_id]), G * dL_dalpha);
