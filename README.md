@@ -42,21 +42,22 @@ From now on(03-24), the 'dynamic' branch will be the development branch. Static 
 
 I will optimize the code structure in free time. In addition, if you have any good suggestions about the algorithm implementation, please let us know and we will continue to improve it.
 
-## Enrionment setup 
+## Environment setup 
 Ref to [dockerfile](https://github.com/cqf7419/LiDAR-GS/blob/dynamic/Dockerfile)
 
 Then 
 ```
 pip install submodules/simple-knn (Get it from the vanilla 3dgs)
 pip install submodules/diff_lidargs_rasterization
-pip install submodules/diff_lidargs_surfel_rasterization (optional)
+pip install submodules/diff_lidargs_surfel_rasterization
 ```
 
 ## Prepare Dataset
 
 - (recommend) Dynamic waymo dataset
-  - We have reorganized the necessary data and deleted the unnecessary data. 
-  - 链接: https://pan.baidu.com/s/16OmYFjy7_-dhdjveWjY0OA 提取码: hryh 
+  - We have reorganized the necessary data. Download and unzip it.
+  - [Big data, 60.67GB, 80 segments](https://pan.baidu.com/s/16OmYFjy7_-dhdjveWjY0OA) 提取码: hryh 
+  - [Small data, 368MB, 1 segments](https://pan.baidu.com/s/1qaKgPwyNStaGZBOl-VdQDg) 提取码: 322g 
 
 - Static dataset ( ref to [AlignMiF](https://github.com/tangtaogo/alignmif) )
   - eg. Waymo Dataset:
