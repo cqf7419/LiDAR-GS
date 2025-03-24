@@ -38,7 +38,7 @@ from utils.loss_utils import l1_loss
 from utils.image_utils import psnr
 from scene.cameras import Camera
 import open3d as o3d
-from utils.obj_utils import get_obj_type, loadStaticObj
+# from utils.obj_utils import get_obj_type, loadStaticObj
 from utils.data_partition_utils import getBlockInfo
 import math
 
@@ -186,12 +186,12 @@ def render_sets(gt_dynamic_model, dataset : ModelParams, iteration : int, pipeli
                 
             model_gaussians.eval()
         ######### TODO 
-        test_timestamp = []#[10,20,31,41]
+        test_timestamp = [10,20,31,41]
         train_views = []
         test_views = []
         for idx, scene_view in enumerate(static_views):
             render_timestamp = scene_view.image_name
-            if render_timestamp in test_timestamp:
+            if idx in test_timestamp:
                 test_views.append(scene_view)
             else:
                 train_views.append(scene_view)
@@ -211,18 +211,16 @@ def render_sets(gt_dynamic_model, dataset : ModelParams, iteration : int, pipeli
             os.makedirs(dataset.model_path)
         
         if not skip_train:
-            if insert_static_obj:
-                if obj_type is not None:
-                    render_set(gt_dynamic_model, dataset, "simulation/"+obj_type, iteration, valid_timestamp_model, model_id_scene_info, train_views, pipeline, background, insert_objs)
-                else:
-                    render_set(gt_dynamic_model, dataset, "simulation_add_manhole", iteration, valid_timestamp_model, model_id_scene_info, train_views, pipeline, background, insert_objs)
-            elif insert_dynamic_obj:
-                render_set(gt_dynamic_model, dataset, "simulation_dynamic", iteration, valid_timestamp_model, model_id_scene_info, train_views, pipeline, background, insert_objs, insert_dynamic_obj=True)
-            else:
-                render_set(gt_dynamic_model, dataset, "train", iteration, valid_timestamp_model, model_id_scene_info, train_views, pipeline, background, insert_objs)
+            # if insert_static_obj:
+            #     if obj_type is not None:
+            #         render_set(gt_dynamic_model, dataset, "simulation/"+obj_type, iteration, valid_timestamp_model, model_id_scene_info, train_views, pipeline, background, insert_objs)
+            # elif insert_dynamic_obj:
+            #     render_set(gt_dynamic_model, dataset, "simulation_dynamic", iteration, valid_timestamp_model, model_id_scene_info, train_views, pipeline, background, insert_objs, insert_dynamic_obj=True)
+            # else:
+            render_set(gt_dynamic_model, dataset, "train", iteration, valid_timestamp_model, model_id_scene_info, train_views, pipeline, background, insert_objs)
 
-        # if not skip_test:
-        #      render_set(dataset, "test", iteration, valid_timestamp_model, model_id_scene_info, test_views, pipeline, background, insert_objs)
+        if not skip_test:
+             render_set(dataset, "test", iteration, valid_timestamp_model, model_id_scene_info, test_views, pipeline, background, insert_objs)
 
 if __name__ == "__main__":
     # Set up command line argument parser
