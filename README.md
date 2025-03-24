@@ -38,7 +38,7 @@
 ## Notes
 Since the pre-processed data link of DyNFL is invalid, we recently re-adapted the dataloader. So the code has been significantly changed.
 
-From now on(03-24), the 'dynamic' branch will be the development branch. Static branches will be enabled gradually. 
+From now on(03-24), the 'dynamic' branch will be the development branch. Static branches will be deprecated gradually. 
 
 I will optimize the code structure in free time. In addition, if you have any good suggestions about the algorithm implementation, please let us know and we will continue to improve it.
 
