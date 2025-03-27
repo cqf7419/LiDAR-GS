@@ -57,7 +57,7 @@ pip install submodules/diff_lidargs_surfel_rasterization
 - (recommend) Dynamic waymo dataset
   - We have reorganized the necessary data. Download and unzip it.
   - [Big data, 60.67GB, 80 segments](https://pan.baidu.com/s/16OmYFjy7_-dhdjveWjY0OA) 提取码: hryh 
-  - [Small data, 368MB, 1 segments](https://pan.baidu.com/s/1qaKgPwyNStaGZBOl-VdQDg) 提取码: 322g 
+  - [Small data, 368MB, 1 segments](https://pan.baidu.com/s/1Ssm_wi65n4zF5DJDcM7-bA) 提取码: hspx 
 
 - Static dataset ( ref to [AlignMiF](https://github.com/tangtaogo/alignmif) )
   - eg. Waymo Dataset:
