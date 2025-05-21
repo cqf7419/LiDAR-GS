@@ -2,7 +2,7 @@
 <!-- <h3 align="center">[CVPR 2024 - Highlight]</h3> -->
 <p align="center">
    <a href="https://arxiv.org/abs/2410.05111.pdf">
-      <img src='https://img.shields.io/badge/paper-pdf-green?style=for-the-badge' alt='Paper PDF'></a>
+      <img src='https://img.shields.io/badge/arxiv-2410.05111-red?style=flat' alt='arxiv 2410.05111'></a>
 </p>
 <!-- <p align="center">
    <a href="https://scholar.google.com.hk/citations?user=1ltylFwAAAAJ&hl=zh-CN&oi=sra">Tao Tang</a>
@@ -92,18 +92,21 @@ logdir='waymo_seq1067'
   git clone https://github.com/cqf7419/LiDAR-GS.git -b dynamic
   bash _exp/triain_waymo1.sh
   ```
-- If you only want to quickly verify on a **short sequence**, you can turn this on 
+- If you only want to quickly verify on a **short sequence**, you can turn this on `single_block_test=True` in [dataPartitionSimple](https://github.com/cqf7419/LiDAR-GS/blob/dynamic/train.py#L552). \
+Two methods to supports long sequence reconstruction: \
+**dataPartitionSimple**: Divide into a block every 50 frames (simple implementation) \
+**dataPartition** : Divide blocks according to scene scale （You need to adjust the parameters according to the data set）
 
-  https://github.com/cqf7419/LiDAR-GS/blob/dynamic/utils/data_partition_utils.py#L26 \
-  or \
-  add a ‘break’ in https://github.com/cqf7419/LiDAR-GS/blob/dynamic/train.py#L552 
+
 - Inference of render: 
   ```
-  # Remember to apply the raydrop mask during inference
-  _render_raydrop = render_pkg["render"][1:2,...]
-  render_raydrop = torch.where(_render_raydrop > 0.5, 1, 0)
+  bash ./_exp/render.sh
+  ###
+  Remember to apply the raydrop mask during inference, for example ():
+  render_raydrop = render_pkg["render"][1:2,...]
+  render_raydrop = torch.where(render_raydrop > 0.5, 1, 0)
   render_depth = render_depth * render_raydrop
-  ## 
+  ###
   ```
 
 ## Video

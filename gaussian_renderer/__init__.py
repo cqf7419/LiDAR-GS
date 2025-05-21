@@ -273,10 +273,12 @@ def renderComposite(viewpoint_cam, background, pipe, valid_model_info, max_depth
     # rendered_image = rendered_image_2
     # radii = radii_2
     occ = allmap[1:2]
+    mid_depth_diff = torch.abs(allmap[5:6] - allmap[0:1])
 
     return {"render": rendered_image,
             "depth":depth,
             "occ":occ,
+            "mid_depth_diff": mid_depth_diff,
             "viewspace_points": total_screenspace_points,
             "visibility_filter" : radii > 0,
             "radii": radii,

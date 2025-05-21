@@ -110,7 +110,7 @@ def render_set(gt_dynamic_model, dataset, name, iteration, valid_timestamp_model
         
         t_list.append(t1-t0)
 
-        rendering = render_pkg["render"]#.detach().cpu().numpy()
+        rendering = render_pkg["render"]
         render_intensity = rendering[0:1,...]
         depth = render_pkg["depth"]
 
@@ -121,9 +121,14 @@ def render_set(gt_dynamic_model, dataset, name, iteration, valid_timestamp_model
         render_raydrop = rendering[1:2,...]
         render_raydrop_mask = torch.where(render_raydrop > 0.5, 1, 0)
 
-        render_intensity = render_intensity*render_raydrop_mask*ray_drop
-        depth = depth*render_raydrop_mask*ray_drop
-        occ = render_pkg["occ"]*render_raydrop_mask*ray_drop
+        render_intensity = render_intensity*render_raydrop_mask
+        depth = depth*render_raydrop_mask
+
+        if True:
+            depth_distortion_aware = render_pkg['mid_depth_diff']
+            depth_distortion_aware = torch.where(depth_distortion_aware < 0.3, 1, 0)
+            render_intensity = render_intensity * depth_distortion_aware
+            depth = depth * depth_distortion_aware
 
         depth_numpy = depth.detach().cpu().numpy()
         intensity_numpy = render_intensity.detach().cpu().numpy()
@@ -135,7 +140,7 @@ def render_set(gt_dynamic_model, dataset, name, iteration, valid_timestamp_model
             make_raydrop = filter_pcd(point_with_intensity[:,:3])
             point_with_intensity = point_with_intensity[make_raydrop]
 
-        if True:# 转到baselidar系
+        if False:# 转到baselidar系
             sensor2baselidar = gt_dynamic_model.get_sensor2baselidar(dataset.sensorid) 
             points = point_with_intensity[:,:3]
             points = (np.pad(points[...,:3], ((0,0),(0, 1)), constant_values=1) @ sensor2baselidar.T)[:,:3]  
@@ -145,8 +150,8 @@ def render_set(gt_dynamic_model, dataset, name, iteration, valid_timestamp_model
             gt_point_with_intensity[:,:3] = gt_points
 
         # header = "X Y Z Intensity\n"  # 保存点云
-        np.savetxt(os.path.join(render_path, "{}.txt".format(render_timestamp)), point_with_intensity, fmt='%.4f', comments='') # header=header,
-        np.savetxt(os.path.join(gt_path, "{}.txt".format(render_timestamp)), gt_point_with_intensity, fmt='%.4f', comments='') # header=header,
+        np.savetxt(os.path.join(render_path, "{}.txt".format(render_timestamp)), point_with_intensity)
+        np.savetxt(os.path.join(gt_path, "{}.txt".format(render_timestamp)), gt_point_with_intensity)
 
 
     
@@ -211,16 +216,10 @@ def render_sets(gt_dynamic_model, dataset : ModelParams, iteration : int, pipeli
             os.makedirs(dataset.model_path)
         
         if not skip_train:
-            # if insert_static_obj:
-            #     if obj_type is not None:
-            #         render_set(gt_dynamic_model, dataset, "simulation/"+obj_type, iteration, valid_timestamp_model, model_id_scene_info, train_views, pipeline, background, insert_objs)
-            # elif insert_dynamic_obj:
-            #     render_set(gt_dynamic_model, dataset, "simulation_dynamic", iteration, valid_timestamp_model, model_id_scene_info, train_views, pipeline, background, insert_objs, insert_dynamic_obj=True)
-            # else:
             render_set(gt_dynamic_model, dataset, "train", iteration, valid_timestamp_model, model_id_scene_info, train_views, pipeline, background, insert_objs)
 
         if not skip_test:
-             render_set(dataset, "test", iteration, valid_timestamp_model, model_id_scene_info, test_views, pipeline, background, insert_objs)
+             render_set(gt_dynamic_model, dataset, "test", iteration, valid_timestamp_model, model_id_scene_info, test_views, pipeline, background, insert_objs)
 
 if __name__ == "__main__":
     # Set up command line argument parser

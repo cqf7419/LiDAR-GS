@@ -156,9 +156,9 @@ class OptimizationParams(ParamGroup):
         self.update_until = 3000
         
         self.min_opacity = 0.005
-        self.success_threshold = 0.8
+        self.success_threshold = 0.5 # 0.8  Adjust according to your own data 
         self.densify_grad_threshold = 0.002
-        self.densify_until_num_points = 500000#2950000
+        self.densify_until_num_points = 1000000 # 500000 Adjust according to your own data 
 
         self.multistep = False
 

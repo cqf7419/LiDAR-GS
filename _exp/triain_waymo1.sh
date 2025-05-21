@@ -1,8 +1,8 @@
 
 # pip install submodules/diff_lidargs_surfel_rasterization
-path="/home/xuanyuan/test2/LiDAR_GS(Waymo)" # # Replace it with the workspace path
+# path="/home/xuanyuan/test2/LiDAR_GS(Waymo)" # # Replace it with the workspace path
 iterations=4000
-output_dir="./outputs"
+output_dir="./output"
 gpu=0
 
 casename="waymo"

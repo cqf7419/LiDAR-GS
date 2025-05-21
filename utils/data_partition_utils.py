@@ -217,3 +217,29 @@ def judgeWhichBlock(sim_baselidar_to_world_pose, block_id_with_rect, log=None):
             distance = curr_distance
             result_block_id = block_id
     return result_block_id
+
+
+def dataPartitionSimple(args, single_block_test=True):
+    time_with_pose, min_x, min_y, max_x, max_y = getInfo(args)
+
+    all_timestamp = list(time_with_pose.keys())
+    if single_block_test:
+        block_time = {
+            0: all_timestamp[50:100]
+        }    
+    else:
+        block_time = {
+            1: all_timestamp[0:50],
+            2: all_timestamp[50:100],
+            3: all_timestamp[100:150],
+            4: all_timestamp[150:],
+        }
+    block_time_with_extend = block_time
+    block_time_without_extend = block_time
+    # save json files
+    block_info = {'block_time_with_extend': block_time_with_extend, 'block_time_without_extend': block_time_without_extend,\
+                'block_id_with_rect': [], 'block_height': []}
+    block_info_json = os.path.join(args.model_path, 'block_info.json')
+    with open(block_info_json, 'w', encoding='utf-8') as file:
+        json.dump(block_info, file, ensure_ascii=False, indent=4)
+    return block_time_with_extend, block_time_without_extend

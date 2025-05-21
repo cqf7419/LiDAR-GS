@@ -158,13 +158,13 @@ __device__ bool cpmpute_pix(
 		before = beam_inclinations[p_r_int - 1]; // 对于升序的beam rad来说 通常只是较小的值
 		after = beam_inclinations[p_r_int];
 		p_r = p_r_int - 1 + (alpha - before)/(after - before); // 保留小数位  / Ray_Divergence_Angle
-		if( alpha > (after + Ray_Divergence_Angle)) return false; 
+		if( alpha > (after + Ray_Divergence_Angle)) return false;
 	}
 	else{ // p_r_int==0
 		before = beam_inclinations[p_r_int];
 		after = beam_inclinations[p_r_int+1];
 		p_r = p_r_int + 1 + (alpha - after)/(after - before); // 保留小数位
-		if( alpha < (before - Ray_Divergence_Angle) ) return false;
+		if( alpha < (before - Ray_Divergence_Angle*5) ) return false; //
 	}
 	p_r = float(H)-p_r-1;
 	pix = {p_c,p_r};
@@ -306,9 +306,9 @@ __global__ void preprocessCUDA_cylinder(int P, int D, int M,
 
 	uint2 rect_min, rect_max;
 	getRect_lidar(point_image,  int(extent.x), int(extent.y), rect_min, rect_max, grid);
-	if(rect_max.y==0) printf("py is %f, max_radius_y is %d, grid.y is %d",point_image.y, int(extent.y), grid.y);
+	// if(rect_max.y==0) printf("py is %f, max_radius_y is %d, grid.y is %d",point_image.y, int(extent.y), grid.y);
 	if ((rect_max.x - rect_min.x) * (rect_max.y - rect_min.y) == 0){
-		printf("rec zero: %f, %f when point_image is %f, %f and rect_y is %d, %d\n", extent.x, extent.y, point_image.x, point_image.y, rect_max.y, rect_min.y);
+		// printf("rec zero: %f, %f when point_image is %f, %f and rect_y is %d, %d\n", extent.x, extent.y, point_image.x, point_image.y, rect_max.y, rect_min.y);
 		return;
 	}
 

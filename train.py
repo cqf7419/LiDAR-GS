@@ -48,7 +48,7 @@ from argparse import ArgumentParser, Namespace
 from arguments import ModelParams, PipelineParams, OptimizationParams
 from utils.lidar_utils import pano_to_lidar_with_intensities,pano_to_lidar
 from utils.lidar_utils import PointsMeter,filter_pcd
-from utils.data_partition_utils import dataPartition, getBlockInfo
+from utils.data_partition_utils import dataPartition, getBlockInfo, dataPartitionSimple
 
 from typing import NamedTuple
 import time
@@ -252,7 +252,7 @@ def training(gt_dynamic_model, dataset, opt, pipe, dataset_name, testing_iterati
         # ------------------------ grad loss -------------------------#
         pred_grad_x = torch.abs(depth[:, :, :-1] - depth[:, :, 1:])
         gt_grad_x = torch.abs(gt_depth[:, :, :-1] - gt_depth[:, :, 1:])
-        grad_clip_x = 0.01
+        grad_clip_x = 0.1
         grad_mask_x = torch.where(gt_grad_x < grad_clip_x, 1, 0)
         mask_dx = ray_drop[:, :, :-1] * grad_mask_x
         grad_loss = l1_loss(pred_grad_x * mask_dx, gt_grad_x * mask_dx)
@@ -410,10 +410,15 @@ def train_composite_report(tb_writer, model_args, dataset_name, iteration, stati
 
         render_raydrop = image[1:2,...]
         render_raydrop_mask = torch.where(render_raydrop > 0.5, 1, 0)
-        render_intensity = render_intensity * ray_drop * render_raydrop_mask # Align with dynfl without considering raydrop
-        depth = depth * ray_drop * render_raydrop_mask 
+        render_intensity = render_intensity * render_raydrop_mask # Align with dynfl without considering raydrop
+        depth = depth * render_raydrop_mask 
 
-
+        if True: # new trick: using depth_distortion_aware
+            depth_distortion_aware = render_pkg['mid_depth_diff']
+            depth_distortion_aware = torch.where(depth_distortion_aware < 0.3, 1, 0)
+            depth = depth * depth_distortion_aware
+            render_intensity = render_intensity * depth_distortion_aware
+            
         if iteration is not None:
             depth_numpy = depth.detach().cpu().numpy()
             intensity_numpy = render_intensity.detach().cpu().numpy()
@@ -436,7 +441,6 @@ def train_composite_report(tb_writer, model_args, dataset_name, iteration, stati
         ssim_loss += (1.0 - ssim(render_intensity, gt_intensity))
         points_meter = PointsMeter(scale=1, intrinsics=None, beam_inclinations=scene_view.beam_inclinations.detach().cpu().numpy())
         
-        # depth_render = torch.clamp(render_pkg["depth"][0:1,...], 5.0, 80.0) * ray_drop
         points_meter.update(depth, gt_depth, Filter=False)
         cd_fs = points_meter.measure()
         cd_test += cd_fs[0]
@@ -542,7 +546,10 @@ if __name__ == "__main__":
             from scene.Waymo_Dynamic_dataloader import Waymo_Dataloader as GT_Dataloader
     else:
         from scene.GT_Dynamic_dataloader import GT_Dataloader
-    block_info_with_extend, block_info_without_extend = dataPartition(model_args)
+
+    # **dataPartitionSimple**: Divide into a block every 50 frames (simple implementation)
+    # **dataPartition** : Divide blocks according to scene scale （You need to adjust the parameters according to the data set）
+    block_info_with_extend, block_info_without_extend = dataPartitionSimple(model_args, single_block_test=True) # dataPartition(model_args)
 
     for block_id, train_frame_times in block_info_with_extend.items():
         gt_dynamic_model = GT_Dataloader(model_args, train = True, train_frame_times=train_frame_times)

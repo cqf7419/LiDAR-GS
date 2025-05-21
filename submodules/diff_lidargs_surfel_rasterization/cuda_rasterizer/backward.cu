@@ -356,8 +356,8 @@ renderCUDA(
 				last_color[ch] = c;
 
 				const float dL_dchannel = dL_dpixel[ch];
-				if(ch==0)
-					dL_dalpha += (c - accum_rec[ch]) * dL_dchannel;
+				// if(ch==0)
+				dL_dalpha += (c - accum_rec[ch]) * dL_dchannel;
 				// Update the gradients w.r.t. color of the Gaussian. 
 				// Atomic, since this pixel is just one of potentially
 				// many that were affected by this Gaussian.
