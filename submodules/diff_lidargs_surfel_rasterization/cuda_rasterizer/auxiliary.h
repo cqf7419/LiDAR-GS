@@ -108,7 +108,7 @@ __forceinline__ __device__ void getRect_lidar(const float2 p, int max_radius_x, 
 		min(grid.y, max((int)0, (int)(round((p.y + max_radius_y))))) //max(,round(p.y / BLOCK_Y)+1)
 		// min(grid.y, max((int)0, (int)((p.y + max_radius_y + BLOCK_Y - 1) / BLOCK_Y)))
 	};
-	if(rect_max.y==0) printf("py is %f, max_radius_y is %d, grid.y is %d",p.y, max_radius_y, grid.y);
+	// if(rect_max.y==0) printf("py is %f, max_radius_y is %d, grid.y is %d",p.y, max_radius_y, grid.y);
 }
 __forceinline__ __device__ float3 transformPoint4x3(const float3& p, const float* matrix)
 {
