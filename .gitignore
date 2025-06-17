@@ -32,6 +32,7 @@ beam_inclinations.ply
 lidar_point.ply
 submodules/diff_lidargs_rasterization_0812.zip
 
+output/
 output1/
 output2/
 outputs/
